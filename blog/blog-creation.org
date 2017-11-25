@@ -1,0 +1,24 @@
+#+TITLE:       Blog Creation
+#+AUTHOR:      Guewen Baconnier
+#+EMAIL:       guewen@gmail.com
+#+DATE:        2017-11-25 Sat
+#+URI:         /blog/%y/%m/%d/blog-creation
+#+KEYWORDS:    blog,spacemacs,emacs,org-mode,org-page
+#+TAGS:        blog, spacemacs
+#+LANGUAGE:    en
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: How I spawned this nice blog in a few hours with Spacemacs and org-mode
+
+I started to use [[http://spacemacs.org][Spacemacs]] a few weeks ago. As a happy Vim (then Neovim) user for many years, I started to use it with curiosity and now it seems the Emacs + Evil virus bit me hard. Org-mode is one of the main motivation for this switch. The possibilities are endless. Opening a small blog to store my notes and bookmarks, for my future self in the first place, seems a good way to learn this amazing editor.
+
+Alongside Spacemacs and Org-mode, I'm using [[https://github.com/kelvinh/org-page][org-page]] to generate static pages on GitHub Pages.
+
+I created a small layer for the configuration of org-page. My spacemacs.d configuration can be found on: https://github.com/guewen/spacemacs.d
+The source for this blog is on: https://github.com/guewen/guewen/tree/source
+
+Interesting links I found along the way:
+
+- [[http://www.modernemacs.com/post/migrate-layers/][Migrating to Spacemacs Layers]]
+- [[https://help.github.com/articles/user-organization-and-project-pages/][GitHub Pages Documentation]]
+- [[https://github.com/wjain/spacemacs.d/blob/master/layers/myorg/packages.el][wjain's spacemacs.d]]
+- [[https://github.com/ekaschalk/.spacemacs.d/blob/master/init.el][ekaschalk's spacemacs.d]]
