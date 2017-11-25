@@ -34,8 +34,7 @@
 
  + Odoo addons for developers, documentation is combined on http://odoo-connector.com/
    - Queue Job: https://github.com/oca/queue
-   - Component system: https://github.com/oca/connector/
-   - Connector Framework: https://github.com/oca/connector/
+   - Component system and Connector framework: https://github.com/oca/connector/
  + Asynchronous connector between Magento and Odoo: https://github.com/OCA/connector-magento/, documentation: http://odoo-magento-connector.com/
  + Asynchronous connector between JIRA and Odoo: https://github.com/camptocamp/connector-jira
  + A pytest extension for Odoo testing: https://github.com/camptocamp/pytest-odoo/
