@@ -2,7 +2,7 @@
 
 * About Guewen Baconnier
 
-  Developer and technical lead working at [[https://www.camptocamp.com][Camptocamp]].
+  Developer and technical lead at [[https://www.camptocamp.com][Camptocamp]].
   Programs mainly in Python but enjoys to discover all kind of technologies.
 
   + Twitter: https://twitter.com/guewenb
