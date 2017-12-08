@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>Postgres Analysis - Guewen Baconnier</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Guewen Baconnier" />
+    <meta name="description" content="Some queries I use for PostgreSQL analysis" />
+    <meta name="keywords" content="postgres" />
+    <link rel="stylesheet" href="/media/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/media/css/prettify.css" type="text/css">
+  </head>
+  <body class="container">
+    <div>
+      <header class="masthead">
+        <h1 class="masthead-title"><a href="/">Guewen Baconnier</a></h1>
+        <p>(ﾉ◕ヮ◕)ﾉ*:・ﾟ✧</p>
+        <ul>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="/tags/">Tags</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="https://github.com/guewen/">GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
+        <form method="get" id="searchform" action="//www.google.com/search">
+          <input type="text" class="field" name="q" id="s" placeholder="Search">
+          <input type="hidden" name="as_sitesearch" value="guewen.github.io">
+        </form>
+      </header>
+    </div>
+
+<div>
+<div class="post">
+<h1>Postgres Analysis</h1>
+
+
+<div id="outline-container-org1013073" class="outline-2">
+<h2 id="org1013073">Postgres Queries</h2>
+<div class="outline-text-2" id="text-org1013073">
+<p>
+Here are some queries I use when I have to analyze issues or optimize PostgreSQL.
+I'll keep this post updated.
+</p>
+</div>
+
+<div id="outline-container-org242bacf" class="outline-3">
+<h3 id="org242bacf">Investigating vacuum/analyze and indices</h3>
+<div class="outline-text-3" id="text-org242bacf">
+</div>
+<div id="outline-container-orgd4964d0" class="outline-4">
+<h4 id="orgd4964d0">Last auto(vacuum|analyze)</h4>
+<div class="outline-text-4" id="text-orgd4964d0">
+<div class="org-src-container">
+<pre class="src src-sql">select relname, last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables order by last_autoanalyze;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgddf82c3" class="outline-4">
+<h4 id="orgddf82c3">Number of unvacuumed transaction in a database</h4>
+<div class="outline-text-4" id="text-orgddf82c3">
+<p>
+If the number of unvacuumed transaction for a database reaches 2^31 - 1'000'000 , PostgreSQL sets the database to readonly. An <a href="https://www.postgresql.org/docs/current/static/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND">offline vacuum</a> is then required, which can block the database for hours or days.
+Check that the age of datfrozenxid stays under 2 billions.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT datname, age(datfrozenxid) 
+FROM pg_database ORDER 
+BY age(datfrozenxid) DESC LIMIT 20;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8b8eb0b" class="outline-4">
+<h4 id="org8b8eb0b">Check if stats are accurate for a table</h4>
+<div class="outline-text-4" id="text-org8b8eb0b">
+<p>
+If the following stats are very different, stats might not be up-to-date.
+</p>
+</div>
+
+<ul class="org-ul">
+<li><a id="orgf772eb7"></a>Known stats for number of rows<br />
+<div class="outline-text-5" id="text-orgf772eb7">
+<div class="org-src-container">
+<pre class="src src-sql">select n_live_tup from pg_stat_user_tables where relname = 'sale_order';
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="org786a2df"></a>To compare with the real count<br />
+<div class="outline-text-5" id="text-org786a2df">
+<div class="org-src-container">
+<pre class="src src-sql">select count(*) from sale_order;
+</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+
+<div id="outline-container-orga05e7f4" class="outline-4">
+<h4 id="orga05e7f4">Ratio between Heap hits and Heap reads</h4>
+<div class="outline-text-4" id="text-orga05e7f4">
+<p>
+Should ideally be at least at 99%. If not, it might indicate that the server's memory is too low (not enough cache).
+A too large shared_buffer can also be the source of a decrease of the ratio and lower performance! <a href="https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz">https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  sum(heap_blks_read) as heap_read,
+  sum(heap_blks_hit)  as heap_hit,
+  sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) as ratio
+FROM
+  pg_statio_user_tables;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc75c4f7" class="outline-4">
+<h4 id="orgc75c4f7">Ratio between Index hits and Index reads</h4>
+<div class="outline-text-4" id="text-orgc75c4f7">
+<p>
+Should ideally be at least at 99%. If not, it might indicate that the server's memory is too low (not enough cache).
+A too large shared_buffer can also be the source of a decrease of the ratio and lower performance! <a href="https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz">https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  sum(idx_blks_read) as idx_read,
+  sum(idx_blks_hit)  as idx_hit,
+  (sum(idx_blks_hit) - sum(idx_blks_read)) / sum(idx_blks_hit) as ratio
+FROM
+  pg_statio_user_indexes;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org36aaf2c" class="outline-4">
+<h4 id="org36aaf2c">Percentage of index usage by table</h4>
+<div class="outline-text-4" id="text-org36aaf2c">
+<p>
+Table with more than 10000 rows should ideally have 99% index usage.
+<a href="http://www.craigkerstiens.com/2012/10/01/understanding-postgres-performance/">http://www.craigkerstiens.com/2012/10/01/understanding-postgres-performance/</a>
+</p>
+
+<p>
+General query:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  relname,
+  100 * idx_scan / (seq_scan + idx_scan) percent_of_times_index_used,
+  n_live_tup rows_in_table
+FROM
+  pg_stat_user_tables
+WHERE
+    seq_scan + idx_scan &gt; 0
+ORDER BY
+  n_live_tup DESC;
+</pre>
+</div>
+
+<p>
+Filter on &lt; 99%
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  relname,
+  100 * idx_scan / (seq_scan + idx_scan) percent_of_times_index_used,
+  n_live_tup rows_in_table
+FROM
+  pg_stat_user_tables
+WHERE
+    seq_scan + idx_scan &gt; 0
+    AND (100 * idx_scan / (seq_scan + idx_scan)) &lt; 99
+ORDER BY
+  n_live_tup DESC;
+</pre>
+</div>
+
+<p>
+Filter on &lt; 99% and at least 500 seq_scan (arbitrary)
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  relname,
+  100 * idx_scan / (seq_scan + idx_scan) percent_of_times_index_used,
+  n_live_tup rows_in_table
+FROM
+  pg_stat_user_tables
+WHERE
+    seq_scan + idx_scan &gt; 0 
+    AND (100 * idx_scan / (seq_scan + idx_scan)) &lt; 99
+    AND seq_scan &gt; 500
+ORDER BY
+  n_live_tup DESC;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc0298a1" class="outline-4">
+<h4 id="orgc0298a1">pg_stat_statements</h4>
+<div class="outline-text-4" id="text-orgc0298a1">
+<p>
+Read <a href="http://www.craigkerstiens.com/2013/01/10/more-on-postgres-performance/">http://www.craigkerstiens.com/2013/01/10/more-on-postgres-performance/</a>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfb4600f" class="outline-3">
+<h3 id="orgfb4600f">Optimizing checkpoints</h3>
+<div class="outline-text-3" id="text-orgfb4600f">
+<p>
+I refer to this excellent article: <a href="https://blog.2ndquadrant.com/basics-of-tuning-checkpoints/">https://blog.2ndquadrant.com/basics-of-tuning-checkpoints/</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9b4f9a4" class="outline-3">
+<h3 id="org9b4f9a4">Locks</h3>
+<div class="outline-text-3" id="text-org9b4f9a4">
+<p>
+The evident reference is <a href="https://wiki.postgresql.org/wiki/Lock_Monitoring">https://wiki.postgresql.org/wiki/Lock_Monitoring</a>.
+This page also has nice queries: <a href="https://wiki.postgresql.org/wiki/Lock_dependency_information">https://wiki.postgresql.org/wiki/Lock_dependency_information</a>
+</p>
+
+<p>
+The first one I use when I suspect some locks is
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT blocked_locks.pid     AS blocked_pid,
+       blocked_activity.usename  AS blocked_user,
+       blocking_locks.pid     AS blocking_pid,
+       blocking_activity.usename AS blocking_user,
+       blocked_activity.query    AS blocked_statement,
+       blocking_activity.query   AS current_statement_in_blocking_process
+ FROM  pg_catalog.pg_locks         blocked_locks
+  JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid
+  JOIN pg_catalog.pg_locks         blocking_locks 
+      ON blocking_locks.locktype = blocked_locks.locktype
+      AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+      AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+      AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+      AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+      AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+      AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+      AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+      AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+      AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+      AND blocking_locks.pid != blocked_locks.pid
+  JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ WHERE NOT blocked_locks.GRANTED;
+</pre>
+</div>
+
+<p>
+From there, I'll very often investigate further with queries on pg_stat_activity.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT * FROM pg_stat_activity WHERE pid = ?;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdb3f22d" class="outline-3">
+<h3 id="orgdb3f22d">Waiting queries</h3>
+<div class="outline-text-3" id="text-orgdb3f22d">
+<p>
+Sometimes, you have a query that seems to hang but you don't see any locks.
+It might be waiting on something (IO for instance).
+</p>
+
+<p>
+Before Postgresql 9.6, you can find these queries with:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT pid,
+datname,
+usename,
+now() - query_start AS runtime,
+waiting,
+state,
+query
+FROM pg_stat_activity
+WHERE waiting = 'true'; 
+</pre>
+</div>
+
+<p>
+But it becomes very interesting since 9.6 that displays also the reason of the wait:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT 
+pid,
+datname,
+usename,
+now() - query_start AS runtime,
+wait_event, 
+wait_event_type,
+state,
+query
+FROM pg_stat_activity
+WHERE wait_event IS NOT NULL
+AND state = 'active';
+</pre>
+</div>
+
+<p>
+Bookmarks about the waiting queries:
+</p>
+<ul class="org-ul">
+<li><a href="https://www.postgresql.org/docs/10/static/monitoring-stats.html">https://www.postgresql.org/docs/10/static/monitoring-stats.html</a></li>
+<li><a href="https://www.openscg.com/2016/11/is-my-query-stuck-postgresql-9-6/">https://www.openscg.com/2016/11/is-my-query-stuck-postgresql-9-6/</a></li>
+<li><a href="http://akorotkov.github.io/blog/2016/03/25/wait_monitoring_9_6/">http://akorotkov.github.io/blog/2016/03/25/wait_monitoring_9_6/</a></li>
+<li><a href="http://paquier.xyz/postgresql-2/postgres-9-6-feature-highlight-wait-events/">http://paquier.xyz/postgresql-2/postgres-9-6-feature-highlight-wait-events/</a></li>
+<li><a href="https://www.credativ.com/credativ-blog/postgresql-96-feature-pgstatactivity-waitevent">https://www.credativ.com/credativ-blog/postgresql-96-feature-pgstatactivity-waitevent</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+    <div>
+      <div class="post-meta">
+        <span title="post date" class="post-info">2017-11-29</span>
+        <span title="last modification date" class="post-info">2017-12-07</span>
+        <span title="tags" class="post-info"><a href="/tags/postgres/">postgres</a>, <a href="/tags/performance/">performance</a>, <a href="/tags/locks/">locks</a></span>
+        <span title="author" class="post-info">Guewen Baconnier</span>
+      </div>
+      <section>
+        <h1>Comments</h1>
+      </section>
+      <script src="//code.jquery.com/jquery-latest.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="/media/js/main.js"></script>
+      <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.x (<a href="http://orgmode.org">Org mode</a> 9.x)</p>
+        <p>
+          Copyright &copy; 2012 - <span id="footerYear"></span> <a href="mailto:guewen &lt;at&gt; gmail &lt;dot&gt; com">Guewen Baconnier</a>
+          &nbsp;&nbsp;-&nbsp;&nbsp;
+          Powered by <a href="https://github.com/kelvinh/org-page" target="_blank">org-page</a>
+          <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>
