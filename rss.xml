@@ -4,15 +4,15 @@
     <title>Guewen Baconnier</title>
     <link>https://guewen.github.io/</link>
     <description>(ﾉ◕ヮ◕)ﾉ*:・ﾟ✧</description>
-    <pubDate>ven., 08 déc. 2017 14:04:29 CET</pubDate>
-    <lastBuildDate>ven., 08 déc. 2017 14:04:29 CET</lastBuildDate>
+    <pubDate>jeu., 12 avril 2018 17:12:16 CEST</pubDate>
+    <lastBuildDate>jeu., 12 avril 2018 17:12:16 CEST</lastBuildDate>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Org-page static site generator (https://github.com/kelvinh/org-page)</generator>
     <item>
       <title>Postgres Analysis</title>
       <link>https://guewen.github.io/blog/2017/11/29/postgres-analysis</link>
       <description><![CDATA[Some queries I use for PostgreSQL analysis]]></description>
-      <pubDate>2017-12-07</pubDate>
+      <pubDate>2018-04-12</pubDate>
       <guid>https://guewen.github.io/blog/2017/11/29/postgres-analysis</guid>
     </item>
     <item>
