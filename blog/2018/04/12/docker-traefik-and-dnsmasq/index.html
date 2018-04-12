@@ -17,6 +17,7 @@
         <ul>
           <li><a href="/blog/">Blog</a></li>
           <li><a href="/tags/">Tags</a></li>
+          <li><a href="/tags/">Tags</a></li>
           <li><a href="/about/">About</a></li>
           <li><a href="https://github.com/guewen/">GitHub</a></li>
           <li><a href="/rss.xml">RSS</a></li>
@@ -54,9 +55,9 @@ The setup we are trying to have here is the following:
 We'll see how to configure them.
 </p>
 
-<div id="outline-container-org6966b28" class="outline-2">
-<h2 id="org6966b28">Configuration of dnsmasq</h2>
-<div class="outline-text-2" id="text-org6966b28">
+<div id="outline-container-orge25fccb" class="outline-2">
+<h2 id="orge25fccb">Configuration of dnsmasq</h2>
+<div class="outline-text-2" id="text-orge25fccb">
 <p>
 Install dnsmasq if needed
 </p>
@@ -115,9 +116,9 @@ And apply the new DHCP config
 </div>
 </div>
 
-<div id="outline-container-org0803e40" class="outline-2">
-<h2 id="org0803e40">Using Traefik in a docker-compose configuration</h2>
-<div class="outline-text-2" id="text-org0803e40">
+<div id="outline-container-org5bb1312" class="outline-2">
+<h2 id="org5bb1312">Using Traefik in a docker-compose configuration</h2>
+<div class="outline-text-2" id="text-org5bb1312">
 <div class="org-src-container">
 <pre class="src src-yaml">version: '2'
 services:
@@ -154,9 +155,11 @@ Start it with
 </div>
 
 <p>
-You can open the Traefik dashboard on <a href="http://localhost:8080">http://localhost:8080</a>. You should see the whoamis frontends and backends listed.
-between
 Now heads on <a href="http://whoami.docker.localhost/">http://whoami.docker.localhost/</a> and <a href="http://whoami2.docker.localhost/">http://whoami2.docker.localhost/</a>, hurray!
+</p>
+
+<p>
+Oh, and the icing on the cake, open the Traefik dashboard on <a href="http://localhost:8080">http://localhost:8080</a>. You should see the whoamis frontends and backends listed.
 </p>
 
 <p>
@@ -165,9 +168,10 @@ You could also start only one traefik container globally on your machine, but th
 </div>
 </div>
 
-<div id="outline-container-orgcefacb9" class="outline-2">
-<h2 id="orgcefacb9">References</h2>
-<div class="outline-text-2" id="text-orgcefacb9">
+
+<div id="outline-container-orgd380f7a" class="outline-2">
+<h2 id="orgd380f7a">References</h2>
+<div class="outline-text-2" id="text-orgd380f7a">
 <ul class="org-ul">
 <li><a href="http://evans.io/legacy/posts/wildcard-subdomains-of-localhost/">http://evans.io/legacy/posts/wildcard-subdomains-of-localhost/</a></li>
 <li><a href="https://hutter.io/2016/02/02/make-all-dev-domains-resolve-to-localhost/">https://hutter.io/2016/02/02/make-all-dev-domains-resolve-to-localhost/</a></li>
