@@ -217,3 +217,11 @@ SELECT * FROM pg_stat_activity WHERE pid = ?;
   + http://akorotkov.github.io/blog/2016/03/25/wait_monitoring_9_6/
   + http://paquier.xyz/postgresql-2/postgres-9-6-feature-highlight-wait-events/
   + https://www.credativ.com/credativ-blog/postgresql-96-feature-pgstatactivity-waitevent
+** Bloat
+  + https://www.citusdata.com/blog/2016/11/04/autovacuum-not-the-enemy/
+  + Queries to check index and tables bloat: https://github.com/pgexperts/pgx_scripts/tree/master/bloat
+  + https://github.com/ioguix/pgsql-bloat-estimation
+** Index maintenance
+   https://wiki.postgresql.org/wiki/Index_Maintenance
+   http://xzilla.net/blog/2008/Jul/Index-pruning-techniques.html
+
