@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>Docker, Traefik and dnsmasq - Guewen Baconnier</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Guewen Baconnier" />
+    <meta name="description" content="Configure dnsmasq and traefik to have local services with *.localhost domains" />
+    <meta name="keywords" content="docker, traefik, dnsmasq, localhost" />
+    <link rel="stylesheet" href="/media/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/media/css/prettify.css" type="text/css">
+  </head>
+  <body class="container">
+    <div>
+      <header class="masthead">
+        <h1 class="masthead-title"><a href="/">Guewen Baconnier</a></h1>
+        <p>(ﾉ◕ヮ◕)ﾉ*:・ﾟ✧</p>
+        <ul>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="/tags/">Tags</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="https://github.com/guewen/">GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
+        <form method="get" id="searchform" action="//www.google.com/search">
+          <input type="text" class="field" name="q" id="s" placeholder="Search">
+          <input type="hidden" name="as_sitesearch" value="guewen.github.io">
+        </form>
+      </header>
+    </div>
+
+<div>
+<div class="post">
+<h1>Docker, Traefik and dnsmasq</h1>
+<p>
+If you have ever been in the situation that need more than one local http service running on your local machine and reachable with a DNS rather than different ports, this setup might be interesting for you.
+</p>
+
+<p>
+dnsmasq is a light DNS forwarder, which proves to be very useful in the use case described here.
+Traefik is a fast, modern HTTP reverse proxy and load balancer perfectly designed for Docker (impressive work).
+</p>
+
+<p>
+The setup we are trying to have here is the following:
+</p>
+
+<ul class="org-ul">
+<li>One web application named "whoami" will be available as <a href="http://whoami.docker.localhost">http://whoami.docker.localhost</a></li>
+<li>One web application named "whoami2" will be available as <a href="http://whoami2.docker.localhost">http://whoami2.docker.localhost</a></li>
+<li>If I add a new one, I don't want to have to edit /etc/hosts</li>
+</ul>
+
+<p>
+We'll see how to configure them.
+</p>
+
+<div id="outline-container-org6966b28" class="outline-2">
+<h2 id="org6966b28">Configuration of dnsmasq</h2>
+<div class="outline-text-2" id="text-org6966b28">
+<p>
+Install dnsmasq if needed
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">sudo apt install dnsmasq
+</pre>
+</div>
+
+<p>
+Active dnsmasq for listening requests from localhost, edit /etc/dnsmasq.conf and ensure you have this line
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">listen-address=127.0.0.1
+</pre>
+</div>
+
+<p>
+Configure your domain by creating a file /etc/dnsmasq.d/localhost.conf containing
+</p>
+
+<pre class="example">
+address=/localhost/127.0.0.1
+</pre>
+
+<p>
+Which means that all requests to any subdomain of .localhost will be forwarded to 127.0.0.1
+</p>
+
+<p>
+Edit /etc/dhcp/dhclient.conf and uncomment the following line, so the DHCP client will use the local dnsmasq forwarder.
+</p>
+
+<pre class="example">
+prepend domain-name-servers 127.0.0.1;
+</pre>
+
+<p>
+Restart dnsmasq, active it to start automatically
+</p>
+<div class="org-src-container">
+<pre class="src src-bash">systemctl restart dnsmasq
+systemctl enable dnsmasq
+</pre>
+</div>
+
+<p>
+And apply the new DHCP config
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">dhclient
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0803e40" class="outline-2">
+<h2 id="org0803e40">Using Traefik in a docker-compose configuration</h2>
+<div class="outline-text-2" id="text-org0803e40">
+<div class="org-src-container">
+<pre class="src src-yaml">version: '2'
+services:
+
+  whoami:
+    image: emilevauge/whoami
+    labels:
+      - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+  whoami2:
+    image: emilevauge/whoami
+    labels:
+      - "traefik.frontend.rule=Host:whoami2.docker.localhost"
+
+  traefik:
+    image: traefik
+    command: --api --docker #Enables the web UI and tells Træfik to listen to docker
+    ports:
+      - "80:80"     #The HTTP port
+      - "8080:8080" #The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock #So that Traefik can listen to the Docker events
+
+</pre>
+</div>
+
+<p>
+Start it with
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash">docker-compose up
+</pre>
+</div>
+
+<p>
+You can open the Traefik dashboard on <a href="http://localhost:8080">http://localhost:8080</a>. You should see the whoamis frontends and backends listed.
+between
+Now heads on <a href="http://whoami.docker.localhost/">http://whoami.docker.localhost/</a> and <a href="http://whoami2.docker.localhost/">http://whoami2.docker.localhost/</a>, hurray!
+</p>
+
+<p>
+You could also start only one traefik container globally on your machine, but then you would have to share a network with your docker-compose composition.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgcefacb9" class="outline-2">
+<h2 id="orgcefacb9">References</h2>
+<div class="outline-text-2" id="text-orgcefacb9">
+<ul class="org-ul">
+<li><a href="http://evans.io/legacy/posts/wildcard-subdomains-of-localhost/">http://evans.io/legacy/posts/wildcard-subdomains-of-localhost/</a></li>
+<li><a href="https://hutter.io/2016/02/02/make-all-dev-domains-resolve-to-localhost/">https://hutter.io/2016/02/02/make-all-dev-domains-resolve-to-localhost/</a></li>
+<li><a href="https://docs.traefik.io/">https://docs.traefik.io/</a></li>
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+    <div>
+      <div class="post-meta">
+        <span title="post date" class="post-info">2018-04-12</span>
+        <span title="last modification date" class="post-info">2018-04-12</span>
+        <span title="tags" class="post-info"><a href="/tags/docker/">docker</a>, <a href="/tags/traefik/">traefik</a>, <a href="/tags/dns/">dns</a>, <a href="/tags/localhost/">localhost</a></span>
+        <span title="author" class="post-info">Guewen Baconnier</span>
+      </div>
+      <section>
+        <h1>Comments</h1>
+      </section>
+      <script src="//code.jquery.com/jquery-latest.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="/media/js/main.js"></script>
+      <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.x (<a href="http://orgmode.org">Org mode</a> 9.x)</p>
+        <p>
+          Copyright &copy; 2012 - <span id="footerYear"></span> <a href="mailto:guewen &lt;at&gt; gmail &lt;dot&gt; com">Guewen Baconnier</a>
+          &nbsp;&nbsp;-&nbsp;&nbsp;
+          Powered by <a href="https://github.com/kelvinh/org-page" target="_blank">org-page</a>
+          <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>
