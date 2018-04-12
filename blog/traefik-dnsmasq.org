@@ -96,11 +96,12 @@ Start it with
 docker-compose up
 #+END_SRC
 
-You can open the Traefik dashboard on http://localhost:8080. You should see the whoamis frontends and backends listed.
-between
 Now heads on http://whoami.docker.localhost/ and http://whoami2.docker.localhost/, hurray!
 
+Oh, and the icing on the cake, open the Traefik dashboard on http://localhost:8080. You should see the whoamis frontends and backends listed.
+
 You could also start only one traefik container globally on your machine, but then you would have to share a network with your docker-compose composition.
+
 
 * References
 
