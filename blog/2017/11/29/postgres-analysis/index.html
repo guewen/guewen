@@ -34,22 +34,22 @@
 <h1>Postgres Analysis</h1>
 
 
-<div id="outline-container-org1937638" class="outline-2">
-<h2 id="org1937638">Postgres Queries</h2>
-<div class="outline-text-2" id="text-org1937638">
+<div id="outline-container-org810cecf" class="outline-2">
+<h2 id="org810cecf">Postgres Queries</h2>
+<div class="outline-text-2" id="text-org810cecf">
 <p>
 Here are some queries I use when I have to analyze issues or optimize PostgreSQL.
 I'll keep this post updated.
 </p>
 </div>
 
-<div id="outline-container-org5eb0d2d" class="outline-3">
-<h3 id="org5eb0d2d">Investigating vacuum/analyze and indices</h3>
-<div class="outline-text-3" id="text-org5eb0d2d">
+<div id="outline-container-org7931c6f" class="outline-3">
+<h3 id="org7931c6f">Investigating vacuum/analyze and indices</h3>
+<div class="outline-text-3" id="text-org7931c6f">
 </div>
-<div id="outline-container-orgf37f3c1" class="outline-4">
-<h4 id="orgf37f3c1">Last auto(vacuum|analyze)</h4>
-<div class="outline-text-4" id="text-orgf37f3c1">
+<div id="outline-container-org4d0bcee" class="outline-4">
+<h4 id="org4d0bcee">Last auto(vacuum|analyze)</h4>
+<div class="outline-text-4" id="text-org4d0bcee">
 <div class="org-src-container">
 <pre class="src src-sql">select relname, last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables order by last_autoanalyze;
 </pre>
@@ -57,9 +57,9 @@ I'll keep this post updated.
 </div>
 </div>
 
-<div id="outline-container-org9cc10be" class="outline-4">
-<h4 id="org9cc10be">Number of unvacuumed transaction in a database</h4>
-<div class="outline-text-4" id="text-org9cc10be">
+<div id="outline-container-org8fdcade" class="outline-4">
+<h4 id="org8fdcade">Number of unvacuumed transaction in a database</h4>
+<div class="outline-text-4" id="text-org8fdcade">
 <p>
 If the number of unvacuumed transaction for a database reaches 2^31 - 1'000'000 , PostgreSQL sets the database to readonly. An <a href="https://www.postgresql.org/docs/current/static/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND">offline vacuum</a> is then required, which can block the database for hours or days.
 Check that the age of datfrozenxid stays under 2 billions.
@@ -74,17 +74,17 @@ BY age(datfrozenxid) DESC LIMIT 20;
 </div>
 </div>
 
-<div id="outline-container-orgb7c7568" class="outline-4">
-<h4 id="orgb7c7568">Check if stats are accurate for a table</h4>
-<div class="outline-text-4" id="text-orgb7c7568">
+<div id="outline-container-org0a1a819" class="outline-4">
+<h4 id="org0a1a819">Check if stats are accurate for a table</h4>
+<div class="outline-text-4" id="text-org0a1a819">
 <p>
 If the following stats are very different, stats might not be up-to-date.
 </p>
 </div>
 
 <ul class="org-ul">
-<li><a id="org5cb2e2a"></a>Known stats for number of rows<br />
-<div class="outline-text-5" id="text-org5cb2e2a">
+<li><a id="orgbf28d64"></a>Known stats for number of rows<br />
+<div class="outline-text-5" id="text-orgbf28d64">
 <div class="org-src-container">
 <pre class="src src-sql">select n_live_tup from pg_stat_user_tables where relname = 'sale_order';
 </pre>
@@ -92,8 +92,8 @@ If the following stats are very different, stats might not be up-to-date.
 </div>
 </li>
 
-<li><a id="org0f7a154"></a>To compare with the real count<br />
-<div class="outline-text-5" id="text-org0f7a154">
+<li><a id="org770012f"></a>To compare with the real count<br />
+<div class="outline-text-5" id="text-org770012f">
 <div class="org-src-container">
 <pre class="src src-sql">select count(*) from sale_order;
 </pre>
@@ -103,9 +103,9 @@ If the following stats are very different, stats might not be up-to-date.
 </ul>
 </div>
 
-<div id="outline-container-orga880db7" class="outline-4">
-<h4 id="orga880db7">Ratio between Heap hits and Heap reads</h4>
-<div class="outline-text-4" id="text-orga880db7">
+<div id="outline-container-org62948c5" class="outline-4">
+<h4 id="org62948c5">Ratio between Heap hits and Heap reads</h4>
+<div class="outline-text-4" id="text-org62948c5">
 <p>
 Should ideally be at least at 99%. If not, it might indicate that the server's memory is too low (not enough cache).
 A too large shared_buffer can also be the source of a decrease of the ratio and lower performance! <a href="https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz">https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz</a>
@@ -123,9 +123,9 @@ FROM
 </div>
 </div>
 
-<div id="outline-container-org46c487b" class="outline-4">
-<h4 id="org46c487b">Ratio between Index hits and Index reads</h4>
-<div class="outline-text-4" id="text-org46c487b">
+<div id="outline-container-org51f969b" class="outline-4">
+<h4 id="org51f969b">Ratio between Index hits and Index reads</h4>
+<div class="outline-text-4" id="text-org51f969b">
 <p>
 Should ideally be at least at 99%. If not, it might indicate that the server's memory is too low (not enough cache).
 A too large shared_buffer can also be the source of a decrease of the ratio and lower performance! <a href="https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz">https://www.postgresql.org/message-id/5465402F.9030509@fuzzy.cz</a>
@@ -143,9 +143,9 @@ FROM
 </div>
 </div>
 
-<div id="outline-container-orge5773b6" class="outline-4">
-<h4 id="orge5773b6">Percentage of index usage by table</h4>
-<div class="outline-text-4" id="text-orge5773b6">
+<div id="outline-container-orgf2ce9a3" class="outline-4">
+<h4 id="orgf2ce9a3">Percentage of index usage by table</h4>
+<div class="outline-text-4" id="text-orgf2ce9a3">
 <p>
 Table with more than 10000 rows should ideally have 99% index usage.
 <a href="http://www.craigkerstiens.com/2012/10/01/understanding-postgres-performance/">http://www.craigkerstiens.com/2012/10/01/understanding-postgres-performance/</a>
@@ -207,9 +207,9 @@ ORDER BY
 </div>
 </div>
 
-<div id="outline-container-org3b5cc53" class="outline-4">
-<h4 id="org3b5cc53">pg_stat_statements</h4>
-<div class="outline-text-4" id="text-org3b5cc53">
+<div id="outline-container-orgf1dd00d" class="outline-4">
+<h4 id="orgf1dd00d">pg_stat_statements</h4>
+<div class="outline-text-4" id="text-orgf1dd00d">
 <p>
 Read <a href="http://www.craigkerstiens.com/2013/01/10/more-on-postgres-performance/">http://www.craigkerstiens.com/2013/01/10/more-on-postgres-performance/</a>
 </p>
@@ -217,18 +217,18 @@ Read <a href="http://www.craigkerstiens.com/2013/01/10/more-on-postgres-performa
 </div>
 </div>
 
-<div id="outline-container-org8eecfd4" class="outline-3">
-<h3 id="org8eecfd4">Optimizing checkpoints</h3>
-<div class="outline-text-3" id="text-org8eecfd4">
+<div id="outline-container-org3cf8a0c" class="outline-3">
+<h3 id="org3cf8a0c">Optimizing checkpoints</h3>
+<div class="outline-text-3" id="text-org3cf8a0c">
 <p>
 I refer to this excellent article: <a href="https://blog.2ndquadrant.com/basics-of-tuning-checkpoints/">https://blog.2ndquadrant.com/basics-of-tuning-checkpoints/</a>
 </p>
 </div>
 </div>
 
-<div id="outline-container-org792df3d" class="outline-3">
-<h3 id="org792df3d">Locks</h3>
-<div class="outline-text-3" id="text-org792df3d">
+<div id="outline-container-org1fefa0a" class="outline-3">
+<h3 id="org1fefa0a">Locks</h3>
+<div class="outline-text-3" id="text-org1fefa0a">
 <p>
 The evident reference is <a href="https://wiki.postgresql.org/wiki/Lock_Monitoring">https://wiki.postgresql.org/wiki/Lock_Monitoring</a>.
 This page also has nice queries: <a href="https://wiki.postgresql.org/wiki/Lock_dependency_information">https://wiki.postgresql.org/wiki/Lock_dependency_information</a>
@@ -275,9 +275,9 @@ From there, I'll very often investigate further with queries on pg_stat_activity
 </div>
 </div>
 
-<div id="outline-container-orgf5896ca" class="outline-3">
-<h3 id="orgf5896ca">Waiting queries</h3>
-<div class="outline-text-3" id="text-orgf5896ca">
+<div id="outline-container-org341655b" class="outline-3">
+<h3 id="org341655b">Waiting queries</h3>
+<div class="outline-text-3" id="text-org341655b">
 <p>
 Sometimes, you have a query that seems to hang but you don't see any locks.
 It might be waiting on something (IO for instance).
@@ -332,9 +332,9 @@ Bookmarks about the waiting queries:
 </ul>
 </div>
 </div>
-<div id="outline-container-orgf94978c" class="outline-3">
-<h3 id="orgf94978c">Bloat</h3>
-<div class="outline-text-3" id="text-orgf94978c">
+<div id="outline-container-org67caab6" class="outline-3">
+<h3 id="org67caab6">Bloat</h3>
+<div class="outline-text-3" id="text-org67caab6">
 <ul class="org-ul">
 <li><a href="https://www.citusdata.com/blog/2016/11/04/autovacuum-not-the-enemy/">https://www.citusdata.com/blog/2016/11/04/autovacuum-not-the-enemy/</a></li>
 <li>Queries to check index and tables bloat: <a href="https://github.com/pgexperts/pgx_scripts/tree/master/bloat">https://github.com/pgexperts/pgx_scripts/tree/master/bloat</a></li>
@@ -342,9 +342,9 @@ Bookmarks about the waiting queries:
 </ul>
 </div>
 </div>
-<div id="outline-container-org7ce76c1" class="outline-3">
-<h3 id="org7ce76c1">Index maintenance</h3>
-<div class="outline-text-3" id="text-org7ce76c1">
+<div id="outline-container-org40a107e" class="outline-3">
+<h3 id="org40a107e">Index maintenance</h3>
+<div class="outline-text-3" id="text-org40a107e">
 <p>
 <a href="https://wiki.postgresql.org/wiki/Index_Maintenance">https://wiki.postgresql.org/wiki/Index_Maintenance</a>
 <a href="http://xzilla.net/blog/2008/Jul/Index-pruning-techniques.html">http://xzilla.net/blog/2008/Jul/Index-pruning-techniques.html</a>
